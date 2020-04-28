@@ -52,6 +52,7 @@ class RaceTrack:
         for i in range(row):
             for j in range(len(self.raceTrack[i])):
                 print(self.raceTrack[i][j])
+        print("\n")
 
     def racerPosition(self, Xcor, Ycor):
         """
