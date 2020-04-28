@@ -19,7 +19,6 @@ class RaceTrack:
             self.raceTrack.append(partTrack)
         
         trackFile.close()
-        
 
     def getXSize(self):
         """
@@ -29,7 +28,7 @@ class RaceTrack:
         Returns:
             An integer of the x size for the track. 
         """
-        return self.trackSize[0]
+        return int(self.trackSize[0])
 
     def getYsize(self):
         """
@@ -39,7 +38,39 @@ class RaceTrack:
         Returns:
             An integer of the x size for the track. 
         """
-        return self.trackSize[1]
+        return int(self.trackSize[1])
+
+    def printTrack(self):
+        """
+        Prints out the track for the user, in a nice row by row format. 
+        Args: 
+            None
+        Returns:
+            None
+        """
+        row = int(self.trackSize[0])
+        for i in range(row):
+            for j in range(len(self.raceTrack[i])):
+                print(self.raceTrack[i][j])
+
+    def racerPosition(self, Xcor, Ycor):
+        """
+        Adds the Racers Current Position to the Track, and lets the racer know if the move was valid or not
+        Args:
+            Xcor: The new X-coordinate of our racer
+            Ycor: The new Y-coordinate of our racer
+        Returns:
+            A String of if the move was valid or not
+        """
+        oldValue= self.raceTrack[Xcor][Ycor]
+        if oldValue == '#':
+            return "Hit Wall"
+        elif oldValue =='.' or oldValue =='R':
+            self.raceTrack[Xcor][Ycor]='R'
+            return "On Track"
+        elif oldValue=='F':
+            self.raceTrack[Xcor][Ycor]='R'
+            return "Finished Track"
 
 
 
