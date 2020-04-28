@@ -69,8 +69,21 @@ class RaceTrack:
             self.raceTrack[Xcor][Ycor]='R'
             return "On Track"
         elif oldValue=='F':
-            self.raceTrack[Xcor][Ycor]='R'
             return "Finished Track"
+
+    def restartRace(self):
+        """
+        Resets the Track to its default state when called. 
+        Args:
+            None
+        Returns:
+            None
+        """
+        row = int(self.trackSize[0])
+        for i in range(row):
+            for j in range(len(self.raceTrack[i])):
+                if self.raceTrack[i][j]=='R':
+                    self.raceTrack[i][j]='.'
 
 
 
