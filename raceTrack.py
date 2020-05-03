@@ -86,6 +86,8 @@ class RaceTrack:
                 if self.raceTrack[i][j]=='R':
                     self.raceTrack[i][j]='.'
 
+    def getTrack(self):
+        return self.raceTrack
 
 
 
