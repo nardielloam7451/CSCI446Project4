@@ -4,13 +4,13 @@ import raceTrack
 import matplotlib.pyplot as plt
 
 class QLearning:
-    def __init__(self, rTrack):
+    def __init__(self, rTrack, restart = False):
         self.track = rTrack
         self.raceTrack = self.track.getTrack()
         self.actions = [(0,0), (0,1), (0,-1), (1,0), (-1,0), (1,1), (-1,1), (1,-1), (-1,-1)]
         self.qTable = np.zeros((rTrack.getXSize(),rTrack.getYsize(), len(self.actions)))
         self.velocity = [0,0]
-        self.restart = False
+        self.restart = restart
         self.cost = 0
         self.startLocations = self.getStart()
         self.crossed = False
@@ -130,7 +130,8 @@ class QLearning:
         plt.plot(list(range(runs)), self.totalCost[:-1])
         plt.xlabel('Runs')
         plt.ylabel('Total Actions For Each Run')
-        plt.show()
+        plt.savefig('Q-Learning-'+str(self.restart)+str(runs)+'.png')
+
     def qLearning(self, runs):
         for i in range(runs):
             location = random.choice(self.startLocations)
