@@ -13,26 +13,27 @@ class QLearning:
         self.cost = 0
         self.startLocations = self.getStart()
         self.crossed = False
+        self.totalCost = 0
 
     def getStart(self):
         startLocations = []
         for x in range(len(self.raceTrack)):
-            if 'S' in self.raceTrack[x]:
                 for y in range(len(self.raceTrack[x])):
-                    if self.raceTrack[x][y] == 'S':
-                        startLocations.append((x,y))
+                    for val in self.raceTrack[x][y]:
+                        if val == 'S':
+                            startLocations.append((x,y))
         return startLocations
 
-    def updateQ(self, action, x, y, alpha, gamma, newX, newY):
-        self.qTable[x][y][action] = self.qTable[x][y][action] + \
-                                    alpha*(self.reward(action, x, y)+
-                                           gamma*np.max(self.qTable[newX][newY])- self.qTable[x][y][action])
+    def updateQ(self, action, x, y, alpha, gamma, newX, newY, newA, reward):
+        self.qTable[x][y][self.actions.index(action)] = self.qTable[x][y][self.actions.index(action)] + \
+                                                        alpha*(reward + gamma*self.qTable[newX][newY][self.actions.index(newA)] -
+                                                               self.qTable[x][y][self.actions.index(action)])
 
     def applyAction(self, x, y, selectedAction):
-        newLocation = (x,y)
+        newLocation = [x,y]
         if random.uniform(0,1) < 0.2:
-            for x in range(self.velocity[0]):
-                newLocation[0]+= 1
+            for x in range(abs(self.velocity[0])):
+                newLocation[0]+= 1*np.sign(self.velocity[0])
                 isvalid = self.track.racerPosition(newLocation[0], newLocation[1])
                 if isvalid == "Finished Track":
                     self.crossed = True
@@ -41,11 +42,11 @@ class QLearning:
                         self.track.restartRace()
                         return self.getStart()
                     else:
-                        newLocation[0]-=1
+                        newLocation[0]-=1 * np.sign(self.velocity[0])
                         self.velocity = (0,0)
                         return newLocation
-            for y in range(self.velocity[1]):
-                newLocation[1] += 1
+            for y in range(abs(self.velocity[1])):
+                newLocation[1] += 1 * np.sign(self.velocity[1])
                 isvalid = self.track.racerPosition(newLocation[0], newLocation[1])
                 if isvalid == "Finished Track":
                     self.crossed = True
@@ -54,7 +55,7 @@ class QLearning:
                         self.track.restartRace()
                         return self.getStart()
                     else:
-                        newLocation[1] -= 1
+                        newLocation[1] -= 1 * np.sign(self.velocity[1])
                         self.velocity = (0,0)
                         return newLocation
         else:
@@ -62,8 +63,10 @@ class QLearning:
             for v in range(2):
                 if self.velocity[v] > 5:
                     self.velocity[v] = 5
-            for x in range(self.velocity[0]):
-                newLocation[0] += 1
+                elif self.velocity[v] < -5:
+                    self.velocity[v] = 5
+            for x in range(abs(self.velocity[0])):
+                newLocation[0] += 1*np.sign(self.velocity[0])
                 isvalid = self.track.racerPosition(newLocation[0], newLocation[1])
                 if isvalid == "Finished Track":
                     self.crossed = True
@@ -72,11 +75,11 @@ class QLearning:
                         self.track.restartRace()
                         return self.getStart()
                     else:
-                        newLocation[0] -= 1
+                        newLocation[0] -= 1*np.sign(self.velocity[0])
                         self.velocity = (0, 0)
                         return newLocation
-            for y in range(self.velocity[1]):
-                newLocation[1] += 1
+            for y in range(abs(self.velocity[1])):
+                newLocation[1] += 1 * np.sign(self.velocity[1])
                 isvalid = self.track.racerPosition(newLocation[0], newLocation[1])
                 if isvalid == "Finished Track":
                     self.crossed = True
@@ -85,30 +88,44 @@ class QLearning:
                         self.track.restartRace()
                         return self.getStart()
                     else:
-                        newLocation[1] -= 1
+                        newLocation[1] -= 1 * np.sign(self.velocity[1])
                         self.velocity = [0, 0]
                         return newLocation
         return newLocation
 
-    def reward(self, x, y):
+    def reward(self):
         if self.crossed:
             return 0
         else:
+            self.totalCost += 1
             return -1
 
     def selectAction(self, x, y):
-        epsilon = 0.2
-        if random.uniform(0, 1) < epsilon:
+        if random.uniform(0, 1) < 0.2:
             return self.actions[random.choice(range(len(self.actions)))]
         else:
             return self.actions[self.qTable[x][y].argmax()]
 
-    def qLearning(self):
-        pass
+    def qLearning(self, runs):
+        for i in range(runs):
+            location = random.choice(self.startLocations)
+            a = self.selectAction(location[0], location[1])
+            while not self.crossed:
+                newLocation = self.applyAction(location[0], location[1], a)
+                newA = self.selectAction(location[0], location[1])
+                reward = self.reward()
+                self.updateQ(a, location[0], location[1], 0.5, 0.8, newLocation[0], newLocation[1], newA, reward)
+                location = newLocation
+                a = newA
+            print(self.totalCost)
+            self.totalCost = 0
+            self.crossed = False
+            self.velocity = (0,0)
+            self.track.printTrack()
+            self.track.restartRace()
+
 
 qLearn = raceTrack.RaceTrack()
 qLearn.createTrack("L-track.txt")
-qLearn.printTrack()
 temp = QLearning(qLearn)
-for i in range(10):
-    print(temp.selectA(0,0))
+temp.qLearning(15)

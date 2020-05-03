@@ -13,10 +13,9 @@ class RaceTrack:
         """
         trackFile = open(fileName)
         self.trackSize = trackFile.readline().split(",")
-
-        for line in trackFile:
-            partTrack=line.split()
-            self.raceTrack.append(partTrack)
+        self.raceTrack = ['' for i in range(int(self.trackSize[0]))]
+        for i, line in zip(range(int(self.trackSize[0])), trackFile):
+            self.raceTrack[i]=list(line.strip())
         
         trackFile.close()
 
@@ -50,8 +49,7 @@ class RaceTrack:
         """
         row = int(self.trackSize[0])
         for i in range(row):
-            for j in range(len(self.raceTrack[i])):
-                print(self.raceTrack[i][j])
+            print(' '.join(map(str, self.raceTrack[i])))
         print("\n")
 
     def racerPosition(self, Xcor, Ycor):
@@ -66,7 +64,7 @@ class RaceTrack:
         oldValue= self.raceTrack[Xcor][Ycor]
         if oldValue == '#':
             return "Hit Wall"
-        elif oldValue =='.' or oldValue =='R':
+        elif oldValue =='.' or oldValue =='R' or oldValue == 'S':
             self.raceTrack[Xcor][Ycor]='R'
             return "On Track"
         elif oldValue=='F':
