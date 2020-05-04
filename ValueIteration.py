@@ -325,7 +325,7 @@ class ValueIteration:
         Returns:
             numSteps: The number of steps actually taken by our algorithm. 
         """
-        randStart = randint(0, len(self.startLocations))
+        randStart = randint(0, len(self.startLocations)-1)
         x = self.startLocations[randStart][0]
         y= self.startLocations[randStart][1]
         totalSteps =[]
@@ -343,7 +343,7 @@ class ValueIteration:
                 ay=steps[(x,y,vx,vy)][1]
 
                 if self.raceTrack[x][y]=='F':
-                    totalSteps[run]=i
+                    totalSteps.append(i)
                     break
             
                 x,y,vy,vx = self.driveTrack(y,x,vy,vx, ax, ay, False, crashPlan)
@@ -353,11 +353,11 @@ class ValueIteration:
                 else:
                     stopClock=0
 
-                if stopClock==5:
-                    totalSteps[run]= maxSteps
+                if stopClock==15:
+                    totalSteps.append(maxSteps)
                     break
-            totalSteps[run]= maxSteps
-        self.showGraphs(totalSteps, runs, crashPlan)
+            totalSteps.append(maxSteps)
+        self.showGraphs(totalSteps, self.maxRuns, crashPlan)
 
     def showGraphs(self, steps, runs, crash):
         plt.figure()
