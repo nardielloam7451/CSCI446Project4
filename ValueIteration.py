@@ -314,7 +314,7 @@ class ValueIteration:
                 return(self.getPolicyfromQ(cols,rows))
         return(self.getPolicyfromQ(cols,rows))
 
-    def timeTrial(self,steps, maxSteps, crashPlan, animate):
+    def timeTrial(self,steps, maxSteps, crashPlan, animate, trackType):
         """
         Preforms the time trail for racer using the Value Iteration method
         Args:
@@ -357,15 +357,15 @@ class ValueIteration:
                     totalSteps.append(maxSteps)
                     break
             totalSteps.append(maxSteps)
-        self.showGraphs(totalSteps, self.maxRuns, crashPlan)
+        self.showGraphs(totalSteps, self.maxRuns, crashPlan, trackType)
 
-    def showGraphs(self, steps, runs, crash):
+    def showGraphs(self, steps, runs, crash, trackType):
         plt.figure()
         plt.subplot(212)
         plt.plot(list(range(runs)), steps)
         plt.xlabel('Runs')
         plt.ylabel('Total Actions For Each Run')
-        plt.savefig('Value Iteration-'+crash+str(runs)+'.png')
+        plt.savefig('Value Iteration-'+trackType+crash+str(runs)+'.png')
 
 
 
