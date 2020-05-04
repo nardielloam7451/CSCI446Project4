@@ -1,0 +1,4 @@
+Value Iteration: Anthony Nardiello
+RaceTrack: Anthony Nardiello
+Qlearning: Kyle Webster
+Graphical Representation: Kyle Webster
