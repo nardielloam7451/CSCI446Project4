@@ -108,7 +108,7 @@ class QLearning:
                         return random.choice(self.startLocations)
                     else:
                         newLocation[0] -= 1*np.sign(self.velocity[0])
-                        self.velocity = (0, 0)
+                        self.velocity = [0, 0]
                         return newLocation
             for y in range(abs(self.velocity[1])):
                 newLocation[1] += 1 * np.sign(self.velocity[1])
@@ -135,7 +135,7 @@ class QLearning:
             return 0
         else:
             self.totalCost[-1] += 1
-            return 1
+            return -1
 
     def selectAction(self, x, y, epsilon = .1):
         """
@@ -148,7 +148,7 @@ class QLearning:
         if random.uniform(0, 1) < epsilon:
             return self.actions[random.choice(range(len(self.actions)))]
         else:
-            return self.actions[self.qTable[x][y].argmin()]
+            return self.actions[self.qTable[x][y].argmax()]
 
     def getAverageReward(self):
         """
@@ -189,12 +189,12 @@ class QLearning:
         for i in range(runs):
             location = random.choice(self.startLocations)
             a = self.selectAction(location[0], location[1], .2)
-            while not self.crossed:
+            while not self.crossed and self.totalCost[-1] < 25000:
                 newLocation = self.applyAction(location[0], location[1], a)
                 newA = self.selectAction(location[0], location[1], 0.2)
                 reward = self.reward()
                 if reward:
-                    self.updateQ(a, location[0], location[1], 0.5, 0.8, newLocation[0], newLocation[1], newA, reward)
+                    self.updateQ(a, location[0], location[1], 0.2, 0.9, newLocation[0], newLocation[1], newA, reward)
                 location = newLocation
                 a = newA
             self.averageReward[-1] = self.getAverageReward()
@@ -208,7 +208,7 @@ class QLearning:
         self.showGraphs(runs)
 
 qLearn = raceTrack.RaceTrack()
-filename = "L-track.txt"
+filename = "O-track.txt"
 qLearn.createTrack(filename)
 temp = QLearning(qLearn, filename, True)
-temp.qLearning(10)
+temp.qLearning(10000)

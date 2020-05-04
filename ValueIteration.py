@@ -6,7 +6,7 @@ class ValueIteration:
     def __init__(self, rTrack):
         self.track = rTrack
         self.raceTrack = self.track.getTrack()
-        self.actions[(-1,-1),(0,-1),(1,-1),(-1,0),(0,0),(1,0),(-1,1),(0,1),(1,1)]
+        self.actions= [(-1,-1),(0,-1),(1,-1),(-1,0),(0,0),(1,0),(-1,1),(0,1),(1,1)]
         self.qTable = np.zeros((rTrack.getXSize(),rTrack.getYsize(), len(self.actions)))
         self.cost = 0
         self.startLocations = self.getStart()
@@ -84,7 +84,7 @@ class ValueIteration:
         
         return newXPos, newYPos, "Moved"
         
-    def Act(self, oldYPos, oldXPos, oldYVel, oldXVel, accelX, accelY, deterministic=(False), crashType):
+    def Act(self, oldYPos, oldXPos, oldYVel, oldXVel, accelX, accelY, crashType, deterministic=(False)):
         """
         This method generates the new state s' (position and velocity) from the old
         state s and the action a taken by the race car. It also takes as parameters
