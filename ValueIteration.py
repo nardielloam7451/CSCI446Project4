@@ -1,6 +1,7 @@
 import numpy as np
 import raceTrack
 import time
+import matplotlib.pyplot as plt
 from random import random
 from random import randint
 from copy import deepcopy
@@ -16,12 +17,11 @@ class ValueIteration:
         self.qTable = [[[[[random() for _ in self.actions] for _ in self.velocities] for _ in (self.velocities)] for _ in line] for line in self.raceTrack]
         self.cost = 0
         self.startLocations = self.getStart()
-        self.crossed = False
-        self.totalCost = 0
         self.discRate = 0.9 #The Discount rate, also known as gamma. 
         self.errorThres = 0.001 #The Error Threshold
         self.probAccelFail = 0.20 #The probability that the acceleration will fail
         self.probAccelSuccess = 1 - self.probAccelFail #The probability that the acceleration will succeed
+        self.maxRuns = 10000
 
     def getStart(self):
         """
@@ -118,7 +118,7 @@ class ValueIteration:
         
         return newXPos, newYPos
     
-    def getNearestOpen(self,yCrash, xCrash, vy, vx, open=['.','S','G']):
+    def getNearestOpen(self,yCrash, xCrash, vy, vx, open=['.','S','F']):
         """
         Locate the nearest open cell in order to hangel crashing. Distance is calculated by Manhatten distance. 
         Args: 
@@ -160,7 +160,7 @@ class ValueIteration:
 
                     if self.raceTrack[x][y] in open:
                         return x,y
-        return xCrash-1, yCrash-1
+        return xCrash-1, yCrash
         
     def getPolicyfromQ(self,cols, rows):
         """
@@ -181,6 +181,8 @@ class ValueIteration:
                 for velocityY in self.velocities: 
                     for velocityX in self.velocities:
                         pi[(x,y,velocityX,velocityY)]=self.actions[np.argmax(self.qTable[x][y][velocityY][velocityX])]
+
+        return pi
     
     def valueIter(self, crashType, reward, numTrainIter):
         """
@@ -326,31 +328,44 @@ class ValueIteration:
         randStart = randint(0, len(self.startLocations))
         x = self.startLocations[randStart][0]
         y= self.startLocations[randStart][1]
+        totalSteps =[]
 
         vy,vx=0,0
 
         stopClock =0
 
-        for i in range(maxSteps):
-            if animate:
-                self.track.printTrack()
+        for run in range(self.maxRuns):
+            for i in range(maxSteps):
+                if animate:
+                    self.track.printTrack()
             
-            ax=steps[(x,y,vx,vy)][0]
-            ay=steps[(x,y,vx,vy)][1]
+                ax=steps[(x,y,vx,vy)][0]
+                ay=steps[(x,y,vx,vy)][1]
 
-            if self.raceTrack[x][y]=='F':
-                return i
+                if self.raceTrack[x][y]=='F':
+                    totalSteps[run]=i
+                    break
             
-            x,y,vy,vx = self.driveTrack(y,x,vy,vx, ax, ay, False, crashPlan)
+                x,y,vy,vx = self.driveTrack(y,x,vy,vx, ax, ay, False, crashPlan)
 
-            if vy==0 and vx==0:
-                stopClock+=1
-            else:
-                stopClock=0
+                if vy==0 and vx==0:
+                    stopClock+=1
+                else:
+                    stopClock=0
 
-            if stopClock==5:
-                return maxSteps
-        return maxSteps
+                if stopClock==5:
+                    totalSteps[run]= maxSteps
+                    break
+            totalSteps[run]= maxSteps
+        self.showGraphs(totalSteps, runs, crashPlan)
+
+    def showGraphs(self, steps, runs, crash):
+        plt.figure()
+        plt.subplot(212)
+        plt.plot(list(range(runs)), steps)
+        plt.xlabel('Runs')
+        plt.ylabel('Total Actions For Each Run')
+        plt.savefig('Value Iteration-'+crash+str(runs)+'.png')
 
 
 
