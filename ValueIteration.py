@@ -1,6 +1,8 @@
 import numpy as np
 import raceTrack
-import random
+import time
+from random import random
+from random import randint
 from copy import deepcopy
 
 class ValueIteration:
@@ -11,7 +13,7 @@ class ValueIteration:
         self.minVelocity = -5
         self.maxVelocity = 5
         self.velocities = range(self.minVelocity, self.maxVelocity+1)
-        self.qTable = [[[[[random.Random() for _ in self.actions] for _ in self.velocities] for _ in (self.velocities)] for _ in line] for line in self.raceTrack]
+        self.qTable = [[[[[random() for _ in self.actions] for _ in self.velocities] for _ in (self.velocities)] for _ in line] for line in self.raceTrack]
         self.cost = 0
         self.startLocations = self.getStart()
         self.crossed = False
@@ -78,18 +80,23 @@ class ValueIteration:
         """
 
         if not deterministic: 
-            if random.Random() > self.probAccelSuccess: #determins if the acceleration fails or not
+            if random() > self.probAccelSuccess: #determins if the acceleration fails or not
                 accelX = 0
                 accelY = 0
 
         newVelX, newVelY, = self.getNewVelocity(oldXVel,oldYVel, accelX, accelY) #gets the new velocity
 
-        newY, newX, message = self.getNewPosition(oldXPos, oldYPos, newVelX, newVelY, crashType) #gets the new positions
+        tempX, tempY = self.getNewPosition(oldXPos, oldYPos, newVelX, newVelY, crashType) #gets the new positions
         
-        if message == "Hit Wall": #checks if we crashed or not
-            if crashType == "Restart":
-                self.track.restartRace()
-            newVelX, newVelY = 0,0
+        newX, newY= self.getNearestOpen(tempY, tempX, newVelY, newVelX)
+
+        if newX != tempX or newY != tempY:
+            if crashType =='Restart' and self.raceTrack[newX][newY]=='F':
+                newPos = randint(0,len(self.startLocations))
+                newX = self.startLocations[newPos][0]
+                newY = self.startLocations[newPos][1]
+            newVelX =0
+            newVelY=0
         
         return newX, newY, newVelX, newVelY
 
@@ -108,20 +115,52 @@ class ValueIteration:
         """
         newXPos= xPos+xVel
         newYPos = yPos+yVel
-        check =self.track.racerPosition(newXPos, newYPos)
-        if check =="Hit Wall":
-            if punishment == "Restart":
-                newXPos = self.startLocations[0][0]
-                newYPos = self.startLocations[0][1]
-                return newXPos, newYPos, "Restart"
-            elif punishment == 'Resume':
-                newXPos = xPos
-                newYPos = yPos
-                return newXPos, newYPos, "Hit Wall"
-        elif check == "Finished Track":
-            return newXPos, yPos, "Finished Track"
         
-        return newXPos, newYPos, "Moved"
+        return newXPos, newYPos
+    
+    def getNearestOpen(self,yCrash, xCrash, vy, vx, open=['.','S','G']):
+        """
+        Locate the nearest open cell in order to hangel crashing. Distance is calculated by Manhatten distance. 
+        Args: 
+            yCrash: The y-coordinate of the crash
+            xCrash: The x-coordinate of the crash
+            vy: The Velocity in the y direction
+            vx: The Velocity in the x direction
+            open: Contains environment types
+        Returns: 
+            x,y coordinates of nearest open space
+        """
+        rows = self.track.getXSize()
+        cols = self.track.getYsize()
+
+        max_radius = max(rows, cols)
+
+        for radius in range(max_radius): 
+            if vx==0: 
+                xRange = range(-radius, radius+1)
+            elif vx <0:
+                xRange = range(0, radius+1)
+            else: 
+                xRange= range(-radius, 1)
+
+            for xOff in xRange: 
+                x= xCrash+xOff
+                yRad = radius - abs(xOff)
+
+                if vy ==0:
+                    yRange = range(yCrash- yRad, yCrash+yRad+1)
+                elif vy <0:
+                    yRange = range(yCrash, yCrash+yRad+1)
+                else:
+                    yRange = range(yCrash-yRad, yCrash+1)
+
+                for y in yRange: 
+                    if x<0 or x>= rows: continue
+                    if y<0 or y>= cols: continue
+
+                    if self.raceTrack[x][y] in open:
+                        return x,y
+        return xCrash-1, yCrash-1
         
     def getPolicyfromQ(self,cols, rows):
         """
@@ -157,9 +196,11 @@ class ValueIteration:
         rows = self.track.getXSize()
         cols = self.track.getYsize()
 
+
+
         #Generates the List comprehension for the entire file
         #stored as Xposition, Yposition, VelocityY, VelocityX
-        values =[[[[random.Random() for rXVel in self.velocities] for rYvel in self.velocities]for rYPOs in (line)] for line in self.raceTrack]
+        values =[[[[random() for _ in self.velocities] for _ in self.velocities]for rYPOs in line] for line in self.raceTrack]
 
         # Set the finish line states to 
         for x in range(rows):
@@ -167,7 +208,7 @@ class ValueIteration:
                 if self.raceTrack[x][y]=='F':
                     for vy in self.velocities:
                         for vx in self.velocities:
-                            values[x][y][vy][vx]
+                                values[x][y][vy][vx] = reward
         
         #Set finish line state-action pairs to 0
         for x in range(rows):
@@ -221,7 +262,7 @@ class ValueIteration:
  
                                 # Get the new state s'. s' is based on the current 
                                 # state s and the current action a
-                                new_x, new_y, new_vx, new_vy = self.driveTrack(new_y, new_x, new_vy, new_vx, a[0], a[1], True, crashType)
+                                new_x, new_y, new_vx, new_vy = self.driveTrack(y, x, vy, vx, a[0], a[1], True, crashType)
  
                                 # V(s'): value of the new state when taking action
                                 # a from state s. This is the one step look ahead.
@@ -229,7 +270,7 @@ class ValueIteration:
  
                                 # Get the new state s'. s' is based on the current 
                                 # state s and the action (0,0)
-                                new_y, new_x, new_vy, new_vx = self.driveTrack(y,x,vy,vx,a[0],a[1],True,crashType)
+                                new_x, new_y, new_vx, new_vy = self.driveTrack(y,x,vy,vx,a[0],a[1],True,crashType)
  
                                 # V(s'): value of the new state when taking action
                                 # (0,0) from state s. This is the value if for some
@@ -270,5 +311,49 @@ class ValueIteration:
             if delta < self.errorThres:
                 return(self.getPolicyfromQ(cols,rows))
         return(self.getPolicyfromQ(cols,rows))
+
+    def timeTrial(self,steps, maxSteps, crashPlan, animate):
+        """
+        Preforms the time trail for racer using the Value Iteration method
+        Args:
+            Steps: The Policy generated by the Value Iteration for our function
+            maxSteps: The maximum number of steps we are allowing our racer to make. 
+            crashPlan: Which of our two choices are we using for our crashplan. If "restart" then it restarts after crashing. 
+            animate: whether or not we want to print out the steps of our algorithm. 
+        Returns:
+            numSteps: The number of steps actually taken by our algorithm. 
+        """
+        randStart = randint(0, len(self.startLocations))
+        x = self.startLocations[randStart][0]
+        y= self.startLocations[randStart][1]
+
+        vy,vx=0,0
+
+        stopClock =0
+
+        for i in range(maxSteps):
+            if animate:
+                self.track.printTrack()
+            
+            ax=steps[(x,y,vx,vy)][0]
+            ay=steps[(x,y,vx,vy)][1]
+
+            if self.raceTrack[x][y]=='F':
+                return i
+            
+            x,y,vy,vx = self.driveTrack(y,x,vy,vx, ax, ay, False, crashPlan)
+
+            if vy==0 and vx==0:
+                stopClock+=1
+            else:
+                stopClock=0
+
+            if stopClock==5:
+                return maxSteps
+        return maxSteps
+
+
+
+
 
  
